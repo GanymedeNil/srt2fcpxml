@@ -2,7 +2,7 @@
 
 srt 字幕文件转为final cut pro 字幕文件(fcpxml)
 
-本软件使用的 final cut pro 10.4.6 版本的 fcpxml 文件作为模版开发，如果又问题请升级到对应版本
+本软件使用 final cut pro X 10.4.6 版本的 fcpxml 文件作为模版开发，如果有问题请升级到对应版本
 
 
 ## 编译
