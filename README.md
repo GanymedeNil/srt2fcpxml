@@ -30,8 +30,3 @@ $ ./srt2fcpxml -srt /tmp/test.srt
 ```
 
 在 srt 文件的目录中会自动生成以srt文件名命名的`fcpxml`文件。
-
-版本注意
-
-如果final cut pro 版本为10.4，将生成的fcpxml文件使用编辑软件(如sublime)打开后，将 ```<fcpxml version="1.8">``` 修改成 ```<fcpxml version="1.7">```
-
