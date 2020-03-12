@@ -154,7 +154,7 @@ var (
 func Srt2FcpxmlExport(projectName string, fd int, subtitles *astisub.Subtitles) ([]byte, error) {
 	frameDuration = fd
 	result := Fcpxml{}
-	result.Version = "1.8"
+	result.Version = "1.7"
 	result.Resources.Format = format{
 		ID:            "r1",
 		Name:          fmt.Sprintf("%s%dp%d", "FFVideoFormat", 1080, frameDuration),
