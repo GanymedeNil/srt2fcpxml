@@ -14,6 +14,7 @@ srt 字幕文件转为final cut pro 字幕文件(fcpxml)
 不想编译的用户可以直接下载[执行文件](https://github.com/GanymedeNil/srt2fcpxml/releases)。
 
 ## 使用
+首先需要赋予程序执行权限 `chmod +x ./srt2fcpxml`
 
 ```bash
 $ ./srt2fcpxml
