@@ -7,6 +7,7 @@ import (
 	"os"
 	"srt2fcpxml/lib"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -218,7 +219,13 @@ func texts(subtitles []*astisub.Item) []title {
 			}{TextStyle: struct {
 				Text string `xml:",chardata"`
 				Ref  string `xml:"ref,attr"`
-			}{Text: item.String(), Ref: fmt.Sprintf("ts%d", index+1)}},
+			}{Text: func(lines []astisub.Line) string {
+				var os []string
+				for _, l := range lines {
+					os = append(os, l.String())
+				}
+				return strings.Join(os, "\n")
+			}(item.Lines), Ref: fmt.Sprintf("ts%d", index+1)}},
 			TextStyleDef: struct {
 				Text      string `xml:",chardata"`
 				ID        string `xml:"id,attr"`
