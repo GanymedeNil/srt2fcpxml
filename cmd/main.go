@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"srt2fcpxml/core"
+	"strconv"
 	"strings"
 
 	"github.com/asticode/go-astisub"
@@ -13,8 +14,15 @@ import (
 
 func main() {
 	srtFile := flag.String("srt", "", "srt 字幕文件")
-	frameDuration := flag.Int("fd", 25, "帧率目前只支持整数24、25、30、50、60")
+	frameDurationPoint := flag.String("fd", "24", "帧率目前支持 23.98、24、25、29.97、30、50、59.94、60")
 	flag.Parse()
+	var frameDuration interface{}
+	if len(*frameDurationPoint) > 2 {
+		frameDuration, _ = strconv.ParseFloat(*frameDurationPoint, 64)
+	} else {
+		frameDuration, _ = strconv.Atoi(*frameDurationPoint)
+	}
+
 	f, _ := astisub.OpenFile(*srtFile)
 	out := `<?xml version="1.0" encoding="UTF-8" ?>
 	<!DOCTYPE fcpxml>
@@ -26,7 +34,7 @@ func main() {
 	}
 
 	project, path := getPath(*srtFile)
-	result, _ := core.Srt2FcpxmlExport(project, *frameDuration, f)
+	result, _ := core.Srt2FcpXmlExport(project, frameDuration, f)
 	out += string(result)
 	targetFile := fmt.Sprintf("%s/%s.fcpxml", path, project)
 	fd, err := os.Create(targetFile)
