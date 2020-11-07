@@ -19,7 +19,7 @@ srt 字幕文件转为final cut pro 字幕文件(fcpxml)
 ```bash
 $ ./srt2fcpxml
   -fd int
-    	帧率目前只支持整数24、25、30、50、60 (default 25)
+    	帧率目前支持 23.98、24、25、29.97、30、50、59.94、60 (default 25)
   -srt string
     	srt 字幕文件
 ```

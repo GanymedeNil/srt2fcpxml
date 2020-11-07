@@ -14,7 +14,7 @@ import (
 
 func main() {
 	srtFile := flag.String("srt", "", "srt 字幕文件")
-	frameDurationPoint := flag.String("fd", "24", "帧率目前支持 23.98、24、25、29.97、30、50、59.94、60")
+	frameDurationPoint := flag.String("fd", "25", "帧率目前支持 23.98、24、25、29.97、30、50、59.94、60")
 	flag.Parse()
 	var frameDuration interface{}
 	if len(*frameDurationPoint) > 2 {
