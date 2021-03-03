@@ -6,8 +6,8 @@ srt 字幕文件转为final cut pro 字幕文件(fcpxml)
 
 
 ## 编译
-
-在项目目录下执行`make`命令后在`build`目录下生成`srt2fcpxml`执行文件。
+首先需要有 Go 语言开发环境
+然后在项目目录下执行`make`命令后在`build`目录下生成`srt2fcpxml`执行文件。
 
 ## 下载
 
