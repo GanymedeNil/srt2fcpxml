@@ -21,7 +21,7 @@ Users who do not want to compile can download the [executable file](https://gith
 不想编译的用户可以直接下载[执行文件](https://github.com/GanymedeNil/srt2fcpxml/releases)。
 
 ## Use (使用)
-First you need to give the program execute permission `chmod +x . /srt2fcpxml`
+First you need to give the program execute permission `chmod +x ./srt2fcpxml`
 
 首先需要赋予程序执行权限 `chmod +x ./srt2fcpxml`
 
