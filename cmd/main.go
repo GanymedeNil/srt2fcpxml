@@ -13,8 +13,11 @@ import (
 )
 
 func main() {
-	srtFile := flag.String("srt", "", "srt 字幕文件")
-	frameDurationPoint := flag.String("fd", "25", "帧率目前支持 23.98、24、25、29.97、30、50、59.94、60")
+	srtFile := flag.String("srt", "", "srt subtitle file")
+	frameDurationPoint := flag.String("fd", "25", "frame rate currently supported 23.98、24、25、29.97、30、50、59.94、60")
+	width := flag.Int("width", 1920, "width resolution default 1920")
+	height := flag.Int("height", 1080, "high resolution default 1080")
+
 	flag.Parse()
 	var frameDuration interface{}
 	if len(*frameDurationPoint) > 2 {
@@ -34,7 +37,7 @@ func main() {
 	}
 
 	project, path := getPath(*srtFile)
-	result, _ := core.Srt2FcpXmlExport(project, frameDuration, f)
+	result, _ := core.Srt2FcpXmlExport(project, frameDuration, f, *width, *height)
 	out += string(result)
 	targetFile := fmt.Sprintf("%s/%s.fcpxml", path, project)
 	fd, err := os.Create(targetFile)

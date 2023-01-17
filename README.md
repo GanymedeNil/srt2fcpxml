@@ -31,6 +31,10 @@ $ ./srt2fcpxml
     	Frame rate is currently supported (帧率目前支持) 23.98、24、25、29.97、30、50、59.94、60 (default 25)
   -srt string
     	srt Subtitle files (字幕文件)
+  -width int
+        width resolution default 1920 (分辨率宽 默认 1920)
+  -height int
+        high resolution default 1080 (分辨率高 默认 1080)       
 ```
 
 ## Execution (执行)

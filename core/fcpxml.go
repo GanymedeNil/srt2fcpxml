@@ -16,13 +16,13 @@ import (
 	"github.com/asticode/go-astisub"
 )
 
-func Srt2FcpXmlExport(projectName string, frameDuration interface{}, subtitles *astisub.Subtitles) ([]byte, error) {
+func Srt2FcpXmlExport(projectName string, frameDuration interface{}, subtitles *astisub.Subtitles, width, height int) ([]byte, error) {
 	fcpxml := FcpXML.New()
 	res := Resources.NewResources()
 	res.SetEffect(Resources.NewEffect())
 	format := Resources.NewFormat().
-		SetWidth(1920).
-		SetHeight(1080).
+		SetWidth(width).
+		SetHeight(height).
 		SetFrameRate(frameDuration).Render()
 	res.SetFormat(format)
 	fcpxml.SetResources(res)
@@ -38,9 +38,9 @@ func Srt2FcpXmlExport(projectName string, frameDuration interface{}, subtitles *
 			return strings.Join(os, "\n")
 		}(item.Lines))
 		title := Title.NewTitle(item.String(), item.StartAt.Seconds(), item.EndAt.Seconds()).SetTextStyleDef(textStyleDef).SetText(text)
-		title.AddParam(Title.NewParams("位置", "9999/999166631/999166633/1/100/101", "0 -450"))
-		title.AddParam(Title.NewParams("对齐", "9999/999166631/999166633/2/354/999169573/401", "1 (居中)"))
-		title.AddParam(Title.NewParams("展平", "9999/999166631/999166633/2/351", "1"))
+		title.AddParam(Title.NewParams("Position", "9999/999166631/999166633/1/100/101", "0 -450"))
+		title.AddParam(Title.NewParams("Alignment", "9999/999166631/999166633/2/354/999169573/401", "1 (Center)"))
+		title.AddParam(Title.NewParams("Flatten", "9999/999166631/999166633/2/351", "1"))
 		gap.AddTitle(title)
 	}
 

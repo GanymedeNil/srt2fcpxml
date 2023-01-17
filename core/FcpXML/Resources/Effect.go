@@ -11,7 +11,7 @@ func NewEffect() *Effect {
 	return &Effect{
 		Text: "",
 		ID:   "r2",
-		Name: "基本字幕",
+		Name: "Basic Title",
 		Uid:  ".../Titles.localized/Bumper:Opener.localized/Basic Title.localized/Basic Title.moti",
 	}
 }
