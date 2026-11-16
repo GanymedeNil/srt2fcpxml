@@ -30,9 +30,14 @@ archives:
 checksum:
   name_template: checksums.txt
 
+# Release notes list the commits since the previous tag. Filters match the first
+# line of each commit message; merge commits only repeat the PR's own commits.
 changelog:
   sort: asc
+  abbrev: 7
   filters:
     exclude:
+      - '^Merge pull request '
+      - '^Merge branch '
       - '^docs:'
       - '^test:'
