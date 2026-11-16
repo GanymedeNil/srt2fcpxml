@@ -1,11 +1,8 @@
 package Sequence
 
 import (
-	"fmt"
 	"srt2fcpxml/core/FcpXML/Common"
 	"srt2fcpxml/core/FcpXML/Library/Event/Project/Sequence/Spine"
-	"srt2fcpxml/core/FcpXML/Resources"
-	"srt2fcpxml/lib"
 )
 
 type Sequence struct {
@@ -19,13 +16,11 @@ type Sequence struct {
 	Spine       *Spine.Spine `xml:"spine"`
 }
 
-func NewSequence(duration float64) *Sequence {
-	frameRate := Resources.GetFrameRate()
-	frameRateR := Common.FrameDuration(frameRate)
-	frameDurationMolecular, frameDurationDenominator, _ := Common.FrameDurationFormat(frameRate)
+// NewSequence creates the project sequence; durationFrames is its length in frames.
+func NewSequence(rate Common.Rate, durationFrames int64) *Sequence {
 	return &Sequence{
 		Text:        "",
-		Duration:    fmt.Sprintf("%.f/%.fs", lib.Round(duration*frameRateR, 0)*frameDurationMolecular, frameDurationDenominator),
+		Duration:    rate.Time(durationFrames),
 		Format:      "r1",
 		TcStart:     "0s",
 		TcFormat:    "NDF",

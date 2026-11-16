@@ -1,10 +1,7 @@
 package Title
 
 import (
-	"fmt"
 	"srt2fcpxml/core/FcpXML/Common"
-	"srt2fcpxml/core/FcpXML/Resources"
-	"srt2fcpxml/lib"
 )
 
 type Title struct {
@@ -20,18 +17,17 @@ type Title struct {
 	TextStyleDef *TextStyleDef `xml:"text-style-def"`
 }
 
-func NewTitle(name string, start, end float64) *Title {
-	frameRate := Resources.GetFrameRate()
-	frameRateR := Common.FrameDuration(frameRate)
-	frameDurationMolecular, frameDurationDenominator, _ := Common.FrameDurationFormat(frameRate)
-	projectStart := 3.6 * frameDurationDenominator * frameDurationMolecular
+// NewTitle creates a title anchored to the gap. startFrame and endFrame are
+// positions on the timeline in whole frames.
+func NewTitle(rate Common.Rate, name string, startFrame, endFrame int64) *Title {
+	base := rate.GapStartFrames()
 	return &Title{
 		Name:         name,
 		Lane:         "1",
-		Offset:       fmt.Sprintf("%.f/%.fs", lib.Round(start*frameRateR, 0)*frameDurationMolecular+projectStart, frameDurationDenominator),
+		Offset:       rate.Time(base + startFrame),
 		Ref:          "r2",
-		Duration:     fmt.Sprintf("%.f/%.fs", lib.Round((end-start)*frameRateR, 0)*frameDurationMolecular*120000.0/frameDurationDenominator, 120000.0),
-		Start:        fmt.Sprintf("%.f/%.fs", projectStart, frameDurationDenominator),
+		Duration:     rate.Time(endFrame - startFrame),
+		Start:        rate.Time(base),
 		Param:        []*Param{},
 		Text:         &Text{},
 		TextStyleDef: &TextStyleDef{},

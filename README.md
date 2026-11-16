@@ -28,7 +28,7 @@ First you need to give the program execute permission `chmod +x ./srt2fcpxml`
 ```bash
 $ ./srt2fcpxml
   -fd int
-    	Frame rate is currently supported (帧率目前支持) 23.98、24、25、29.97、30、50、59.94、60 (default 25)
+    	Frame rate is currently supported (帧率目前支持) 23.976 (23.98)、24、25、29.97、30、50、59.94、60 (default 25)
   -srt string
     	srt Subtitle files (字幕文件)
   -width int
