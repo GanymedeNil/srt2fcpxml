@@ -27,13 +27,31 @@ jobs:
           if [ -n "$unformatted" ]; then echo "Run gofmt on:"; echo "$unformatted"; exit 1; fi
       - run: go vet ./...
       - run: go test ./...
+      - name: Build the web version
+        if: runner.os == 'Linux'
+        run: |
+          GOOS=js GOARCH=wasm go vet ./cmd/wasm
+          make web
 
   goreleaser-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
       - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: '~> v2'
           args: check
+      - name: Build release archives (snapshot, not published)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --snapshot --clean --skip=publish
+      - name: List archive contents
+        run: |
+          for a in dist/*.tar.gz; do echo "== $a"; tar -tzf "$a"; done
+          for a in dist/*.zip; do echo "== $a"; unzip -l "$a"; done

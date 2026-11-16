@@ -3,7 +3,8 @@ version: 2
 project_name: srt2fcpxml
 
 builds:
-  - main: ./cmd/srt2fcpxml
+  - id: srt2fcpxml
+    main: ./cmd/srt2fcpxml
     binary: srt2fcpxml
     env:
       - CGO_ENABLED=0
@@ -11,10 +12,26 @@ builds:
     goarch: [amd64, arm64]
     ldflags:
       - -s -w -X main.version={{ .Version }}
+  - id: fcpxml2srt
+    main: ./cmd/fcpxml2srt
+    binary: fcpxml2srt
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
 
-# One macOS binary for both Apple silicon and Intel.
+# One macOS binary for both Apple silicon and Intel, per program.
 universal_binaries:
-  - replace: true
+  - id: srt2fcpxml
+    ids: [srt2fcpxml]
+    name_template: srt2fcpxml
+    replace: true
+  - id: fcpxml2srt
+    ids: [fcpxml2srt]
+    name_template: fcpxml2srt
+    replace: true
 
 archives:
   - formats: [tar.gz]

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.14">
+    <project name="Bundled"><sequence duration="5s"><spine><gap offset="0s" start="0s" duration="5s"><title ref="r1" lane="1" offset="1001/1000s" start="0s" duration="1s"><text>From a bundle</text></title></gap></spine></sequence></project>
+</fcpxml>

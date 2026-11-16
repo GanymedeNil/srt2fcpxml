@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<!-- Hand-written to cover the timing rules; times in the comments are SRT times. -->
+<fcpxml version="1.11">
+    <resources>
+        <format id="r1" name="FFVideoFormat1080p25" frameDuration="100/2500s" width="1920" height="1080"/>
+        <effect id="r2" name="Basic Title" uid=".../Titles.localized/Bumper:Opener.localized/Basic Title.localized/Basic Title.moti"/>
+        <asset id="r3" name="interview" start="0s" duration="60s" hasVideo="1" format="r1">
+            <media-rep kind="original-media" src="file:///tmp/interview.mov"/>
+        </asset>
+        <media id="r4" name="Compound">
+            <sequence format="r1" duration="10s" tcStart="0s">
+                <spine>
+                    <gap name="Gap" offset="0s" start="0s" duration="10s">
+                        <title ref="r2" lane="1" offset="1s" name="t" start="0s" duration="2s"><text><text-style ref="c1">Inside compound</text-style></text></title>
+                        <title ref="r2" lane="1" offset="4s" name="t" start="0s" duration="2s"><text><text-style ref="c2">Cut by compound end</text-style></text></title>
+                        <title ref="r2" lane="1" offset="6s" name="t" start="0s" duration="1s"><text><text-style ref="c3">Hidden after compound end</text-style></text></title>
+                    </gap>
+                </spine>
+            </sequence>
+        </media>
+    </resources>
+    <library>
+        <event name="Event">
+            <project name="Main">
+                <sequence format="r1" duration="35s" tcStart="3600s" tcFormat="NDF">
+                    <spine>
+                        <!-- 00:00:00-00:00:10, clip local time starts at 10s -->
+                        <asset-clip ref="r3" offset="3600s" name="interview" start="10s" duration="10s">
+                            <!-- 2s-4s -->
+                            <title ref="r2" lane="1" offset="12s" name="t" start="3600s" duration="2s">
+                                <text>
+                                    <text-style ref="a1">Anchored on clip</text-style>
+                                </text>
+                            </title>
+                            <spine lane="1" offset="15s">
+                                <!-- 5s-6s -->
+                                <title ref="r2" offset="15s" name="t" start="3600s" duration="1s"><text><text-style ref="a2">In secondary storyline</text-style></text></title>
+                                <title ref="r2" offset="16s" name="t" start="3600s" duration="1s" enabled="0"><text><text-style ref="a3">Disabled</text-style></text></title>
+                            </spine>
+                        </asset-clip>
+                        <!-- 00:00:10-00:00:20 -->
+                        <gap name="Gap" offset="3610s" start="3600s" duration="10s">
+                            <!-- 10s-11s: two runs and a line break -->
+                            <title ref="r2" lane="1" offset="3600s" name="t" start="3600s" duration="1s">
+                                <text>
+                                    <text-style ref="b1">第一行&#xA;</text-style>
+                                    <text-style ref="b2">Second line</text-style>
+                                </text>
+                            </title>
+                            <!-- 12s-14s -->
+                            <caption lane="1" offset="3602s" name="c" start="3600s" duration="2s" role="SRT?captionFormat=SRT.en"><text><text-style ref="b3">A caption</text-style></text></caption>
+                            <!-- 14s-15s: only the active (first) pick -->
+                            <audition lane="2" offset="3604s">
+                                <title ref="r2" offset="3604s" name="t" start="3600s" duration="1s"><text><text-style ref="b4">Audition pick</text-style></text></title>
+                                <title ref="r2" offset="3604s" name="t" start="3600s" duration="1s"><text><text-style ref="b5">Alternative take</text-style></text></title>
+                            </audition>
+                            <!-- title with no text is skipped -->
+                            <title ref="r2" lane="1" offset="3606s" name="t" start="3600s" duration="1s"><text><text-style ref="b6"> </text-style></text></title>
+                        </gap>
+                        <!-- 00:00:20-00:00:25: compound clip, shows r4 from 0s to 5s -->
+                        <ref-clip ref="r4" offset="3620s" name="Compound" start="0s" duration="5s"/>
+                        <!-- 00:00:25-00:00:30: retimed clip -->
+                        <clip offset="3625s" name="Slow" start="0s" duration="5s">
+                            <timeMap>
+                                <timept time="0s" value="0s" interp="linear"/>
+                                <timept time="5s" value="2.5s" interp="linear"/>
+                            </timeMap>
+                            <gap offset="0s" start="0s" duration="5s"/>
+                            <title ref="r2" lane="1" offset="1s" name="t" start="0s" duration="1s"><text><text-style ref="d1">On retimed clip</text-style></text></title>
+                        </clip>
+                    </spine>
+                </sequence>
+            </project>
+        </event>
+    </library>
+</fcpxml>

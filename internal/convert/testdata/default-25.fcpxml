@@ -28,9 +28,13 @@
                                 <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"></param>
                                 <param name="Flatten" key="9999/999166631/999166633/2/351" value="1"></param>
                                 <text>
-                                    <text-style ref="ts2">Italic &amp; bold &#34;quotes&#34;</text-style>
+                                    <text-style ref="ts2">Italic</text-style>
+                                    <text-style ref="ts3"> &amp; bold &#34;quotes&#34;</text-style>
                                 </text>
                                 <text-style-def id="ts2">
+                                    <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" italic="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
+                                </text-style-def>
+                                <text-style-def id="ts3">
                                     <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
                                 </text-style-def>
                             </title>
@@ -39,9 +43,9 @@
                                 <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"></param>
                                 <param name="Flatten" key="9999/999166631/999166633/2/351" value="1"></param>
                                 <text>
-                                    <text-style ref="ts3">一小时处的字幕</text-style>
+                                    <text-style ref="ts4">一小时处的字幕</text-style>
                                 </text>
-                                <text-style-def id="ts3">
+                                <text-style-def id="ts4">
                                     <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
                                 </text-style-def>
                             </title>

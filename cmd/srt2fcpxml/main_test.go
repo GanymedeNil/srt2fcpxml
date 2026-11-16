@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -104,5 +105,73 @@ func TestVersion(t *testing.T) {
 	code, stdout, _ := runCLI("-version")
 	if code != 0 || !strings.HasPrefix(stdout, "srt2fcpxml ") {
 		t.Errorf("exit %d, stdout %q", code, stdout)
+	}
+}
+
+func TestBilingual(t *testing.T) {
+	zh := setup(t, "zh.srt", "1\n00:00:01,000 --> 00:00:02,000\n你好\n")
+	en := setup(t, "en.srt", "1\n00:00:01,000 --> 00:00:02,000\n<i>Hello</i> <b>there</b>\n")
+	code, stdout, stderr := runCLI("-o", "-", "-secondary", en, "-secondary-font-size", "30", "-secondary-font-color", "#FFD700", zh)
+	if code != 0 {
+		t.Fatalf("exit %d: %s", code, stderr)
+	}
+	for _, want := range []string{`>你好&#xA;</text-style>`, `>Hello</text-style>`, `> </text-style>`, `>there</text-style>`, `fontSize="30"`, `fontColor="1 0.843137 0 1"`} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("output lacks %s", want)
+		}
+	}
+
+	both := setup(t, "both.srt", "1\n00:00:01,000 --> 00:00:02,000\n你好\nHello\n")
+	code, stdout, stderr = runCLI("-o", "-", "-split-lines", both)
+	if code != 0 || !strings.Contains(stdout, `>你好&#xA;</text-style>`) || !strings.Contains(stdout, `fontSize="36"`) {
+		t.Errorf("-split-lines: exit %d, stderr %q", code, stderr)
+	}
+}
+
+func TestBilingualErrors(t *testing.T) {
+	in := setup(t, "a.srt", srt)
+	if code, _, stderr := runCLI("-secondary", in, "-split-lines", in); code != 1 || !strings.Contains(stderr, "not both") {
+		t.Errorf("both options: exit %d, stderr %q", code, stderr)
+	}
+	if code, _, stderr := runCLI("-secondary", "missing.srt", in); code != 1 || !strings.Contains(stderr, "cannot read missing.srt") {
+		t.Errorf("missing secondary: exit %d, stderr %q", code, stderr)
+	}
+}
+
+// Runs the real ffprobe on a generated clip when FFmpeg is installed.
+func TestVideoFlag(t *testing.T) {
+	ffmpeg, err := exec.LookPath("ffmpeg")
+	if err != nil {
+		t.Skip("ffmpeg not installed")
+	}
+	if _, err := exec.LookPath("ffprobe"); err != nil {
+		t.Skip("ffprobe not installed")
+	}
+	dir := t.TempDir()
+	clip := filepath.Join(dir, "my clip.mov")
+	if out, err := exec.Command(ffmpeg, "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=30000/1001:duration=3",
+		"-timecode", "01:00:00;00", "-pix_fmt", "yuv420p", clip).CombinedOutput(); err != nil {
+		t.Skipf("ffmpeg could not make a test clip: %v\n%s", err, out)
+	}
+	in := setup(t, "a.srt", srt)
+	code, stdout, stderr := runCLI("-o", "-", "-video", clip, in)
+	if code != 0 {
+		t.Fatalf("exit %d: %s", code, stderr)
+	}
+	for _, want := range []string{
+		`name="FFVideoFormat720p2997" frameDuration="1001/30000s" width="1280" height="720"`,
+		`name="my clip" src="file://`, `my%20clip.mov"`,
+		`tcFormat="DF"`,
+		`<asset-clip ref="r3" offset="0s" name="my clip" start="107999892/30000s"`, // 01:00:00;00 = frame 107892
+	} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("output lacks %s", want)
+		}
+	}
+
+	// Flags given explicitly win over what the video says.
+	code, stdout, _ = runCLI("-o", "-", "-video", clip, "-width", "1920", "-height", "1080", in)
+	if code != 0 || !strings.Contains(stdout, `width="1920" height="1080"`) {
+		t.Errorf("explicit size not used: exit %d", code)
 	}
 }

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>srt2fcpxml</title>
+  <meta name="description" content="Convert subtitle files into Final Cut Pro titles, and export timeline titles back to SRT. Runs in your browser; files are never uploaded.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">
+      <h1>srt2fcpxml</h1>
+      <p class="lede" data-i18n="lede"></p>
+    </div>
+    <div class="masthead-tools">
+      <a class="repo" href="https://github.com/GanymedeNil/srt2fcpxml" data-i18n="repo"></a>
+      <button type="button" class="lang" id="lang" aria-label="Language"></button>
+    </div>
+  </header>
+
+  <nav class="modes" role="tablist" aria-label="Mode">
+    <button type="button" role="tab" id="tab-convert" aria-controls="panel-convert" aria-selected="true" data-i18n="tabConvert"></button>
+    <button type="button" role="tab" id="tab-extract" aria-controls="panel-extract" aria-selected="false" data-i18n="tabExtract"></button>
+  </nav>
+
+  <main>
+    <!-- Subtitles → FCPXML -->
+    <section class="bay" id="panel-convert" role="tabpanel" aria-labelledby="tab-convert">
+      <form class="inspector" id="convert-form">
+        <label class="drop" id="drop-primary">
+          <input type="file" id="file-primary" accept=".srt,.vtt,.ass,.ssa,.ttml,.stl">
+          <span class="drop-title" data-i18n="dropSubtitle"></span>
+          <span class="drop-file" id="name-primary" data-i18n="dropHint"></span>
+        </label>
+
+        <fieldset>
+          <legend data-i18n="bilingual"></legend>
+          <div class="seg" role="radiogroup">
+            <label><input type="radio" name="bilingual" value="none" checked><span data-i18n="biNone"></span></label>
+            <label><input type="radio" name="bilingual" value="file"><span data-i18n="biFile"></span></label>
+            <label><input type="radio" name="bilingual" value="split"><span data-i18n="biSplit"></span></label>
+          </div>
+          <label class="drop drop-small" id="drop-secondary" hidden>
+            <input type="file" id="file-secondary" accept=".srt,.vtt,.ass,.ssa,.ttml,.stl">
+            <span class="drop-file" id="name-secondary" data-i18n="dropSecondary"></span>
+          </label>
+          <p class="note" id="split-note" hidden data-i18n="splitNote"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend data-i18n="project"></legend>
+          <div class="row">
+            <label class="field"><span data-i18n="fps"></span>
+              <select id="fps">
+                <option value="23.976">23.976</option><option value="24">24</option>
+                <option value="25" selected>25</option><option value="29.97">29.97</option>
+                <option value="30">30</option><option value="50">50</option>
+                <option value="59.94">59.94</option><option value="60">60</option>
+              </select>
+            </label>
+            <label class="field"><span data-i18n="resolution"></span>
+              <select id="resolution">
+                <option value="1920x1080" selected>1920 × 1080</option>
+                <option value="3840x2160">3840 × 2160</option>
+                <option value="1280x720">1280 × 720</option>
+                <option value="1080x1920" data-i18n="vertical1080"></option>
+                <option value="2160x3840" data-i18n="vertical4k"></option>
+                <option value="custom" data-i18n="custom"></option>
+              </select>
+            </label>
+          </div>
+          <div class="row" id="custom-size" hidden>
+            <label class="field"><span data-i18n="width"></span><input type="number" id="width" min="16" max="16384" value="1920"></label>
+            <label class="field"><span data-i18n="height"></span><input type="number" id="height" min="16" max="16384" value="1080"></label>
+          </div>
+          <p class="note" data-i18n="fpsNote"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend data-i18n="style"></legend>
+          <div class="row">
+            <label class="field"><span data-i18n="fontSize"></span><input type="number" id="font-size" min="8" max="400" value="52"></label>
+            <label class="field field-color"><span data-i18n="color"></span><input type="color" id="font-color" value="#ffffff"></label>
+          </div>
+          <div class="row">
+            <label class="field"><span data-i18n="strokeWidth"></span><input type="number" id="stroke-width" min="0" max="40" step="0.5" value="0"></label>
+            <label class="field field-color"><span data-i18n="strokeColor"></span><input type="color" id="stroke-color" value="#000000"></label>
+          </div>
+          <label class="field"><span data-i18n="positionY"></span>
+            <input type="range" id="position-y" min="-540" max="540" step="5" value="-450">
+          </label>
+          <div class="row" id="secondary-style" hidden>
+            <label class="field"><span data-i18n="secondarySize"></span><input type="number" id="secondary-size" min="8" max="400" value="36"></label>
+            <label class="field field-color"><span data-i18n="secondaryColor"></span><input type="color" id="secondary-color" value="#ffffff"></label>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="primary" id="convert-button" disabled data-i18n="loading"></button>
+        <div class="result" id="convert-result" aria-live="polite"></div>
+      </form>
+
+      <div class="monitor">
+        <div class="viewer" id="viewer" aria-label="Preview">
+          <div class="safe" aria-hidden="true"></div>
+          <p class="caption" id="viewer-text"><span class="l1">你好，世界</span><span class="l2">Hello, world</span></p>
+        </div>
+        <p class="note viewer-note" data-i18n="previewNote"></p>
+        <div class="timeline" id="timeline" hidden>
+          <div class="ruler"><span id="tc-start">00:00:00</span><span id="cue-count"></span><span id="tc-end"></span></div>
+          <div class="lane lane-titles" id="lane"></div>
+          <div class="lane lane-gap"><span data-i18n="gap"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FCPXML → subtitles -->
+    <section class="bay" id="panel-extract" role="tabpanel" aria-labelledby="tab-extract" hidden>
+      <form class="inspector" id="extract-form">
+        <label class="drop">
+          <input type="file" id="file-fcpxml" accept=".fcpxml,.xml">
+          <span class="drop-title" data-i18n="dropFcpxml"></span>
+          <span class="drop-file" id="name-fcpxml" data-i18n="dropFcpxmlHint"></span>
+        </label>
+        <fieldset>
+          <legend data-i18n="export"></legend>
+          <div class="row">
+            <label class="field"><span data-i18n="format"></span>
+              <select id="format"><option value=".srt">SRT</option><option value=".vtt">WebVTT</option></select>
+            </label>
+            <label class="field"><span data-i18n="include"></span>
+              <select id="only">
+                <option value="" data-i18n="both"></option>
+                <option value="title" data-i18n="titles"></option>
+                <option value="caption" data-i18n="captions"></option>
+              </select>
+            </label>
+          </div>
+          <label class="field"><span data-i18n="projectName"></span><input type="text" id="project-name" autocomplete="off"></label>
+        </fieldset>
+        <button type="submit" class="primary" id="extract-button" disabled data-i18n="loading"></button>
+        <div class="result" id="extract-result" aria-live="polite"></div>
+      </form>
+      <div class="monitor">
+        <pre class="cue-list" id="cue-list" data-i18n="cueListEmpty"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer data-i18n="footer"></footer>
+
+  <script src="wasm_exec.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

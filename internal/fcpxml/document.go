@@ -35,6 +35,7 @@ func (d *Document) Marshal() ([]byte, error) {
 type Resources struct {
 	Formats []Format `xml:"format"`
 	Effects []Effect `xml:"effect"`
+	Assets  []Asset  `xml:"asset"`
 }
 
 type Format struct {
@@ -50,6 +51,22 @@ type Effect struct {
 	ID   string `xml:"id,attr"`
 	Name string `xml:"name,attr"`
 	UID  string `xml:"uid,attr"`
+}
+
+// Asset is a media file. In FCPXML 1.7 its location is the src attribute; from
+// 1.9 on it moved to a media-rep child element.
+type Asset struct {
+	ID            string `xml:"id,attr"`
+	Name          string `xml:"name,attr"`
+	Src           string `xml:"src,attr"`
+	Start         string `xml:"start,attr"`
+	Duration      string `xml:"duration,attr"`
+	HasVideo      string `xml:"hasVideo,attr,omitempty"`
+	Format        string `xml:"format,attr,omitempty"`
+	HasAudio      string `xml:"hasAudio,attr,omitempty"`
+	AudioSources  string `xml:"audioSources,attr,omitempty"`
+	AudioChannels string `xml:"audioChannels,attr,omitempty"`
+	AudioRate     string `xml:"audioRate,attr,omitempty"`
 }
 
 type Library struct {
@@ -80,8 +97,23 @@ type Sequence struct {
 	Spine       Spine  `xml:"spine"`
 }
 
+// Spine holds either a gap or an asset-clip; srt2fcpxml never mixes them.
 type Spine struct {
-	Gaps []Gap `xml:"gap"`
+	Gaps       []Gap       `xml:"gap"`
+	AssetClips []AssetClip `xml:"asset-clip"`
+}
+
+// AssetClip places a whole asset on the timeline, with titles anchored to it.
+// Anchored titles' offsets are in the clip's local time, which begins at Start.
+type AssetClip struct {
+	Ref      string  `xml:"ref,attr"`
+	Offset   string  `xml:"offset,attr"`
+	Name     string  `xml:"name,attr"`
+	Start    string  `xml:"start,attr"`
+	Duration string  `xml:"duration,attr"`
+	Format   string  `xml:"format,attr,omitempty"`
+	TCFormat string  `xml:"tcFormat,attr,omitempty"`
+	Titles   []Title `xml:"title"`
 }
 
 type Gap struct {

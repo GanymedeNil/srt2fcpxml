@@ -1,0 +1,50 @@
+name: Pages
+
+# Builds the web version (web/ + WebAssembly) and publishes it to GitHub Pages.
+# Needs Settings → Pages → Source set to "GitHub Actions".
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'web/**'
+      - 'cmd/wasm/**'
+      - 'internal/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'makefile'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: make web
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

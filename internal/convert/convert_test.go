@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/GanymedeNil/srt2fcpxml/v3/internal/fcpxml"
+	"github.com/GanymedeNil/srt2fcpxml/v3/internal/input"
 	"github.com/asticode/go-astisub"
 )
 
@@ -42,29 +43,48 @@ func fixedOptions(t *testing.T, fps string) Options {
 }
 
 func TestGolden(t *testing.T) {
-	subs, err := astisub.OpenFile("testdata/basic.srt")
-	if err != nil {
-		t.Fatal(err)
-	}
 	custom, err := LoadStyle("testdata/custom.json", DefaultStyle())
 	if err != nil {
 		t.Fatal(err)
 	}
 	tests := []struct {
-		name   string
-		fps    string
-		width  int
-		height int
-		style  Style
+		name      string
+		srt       string
+		secondary string
+		split     bool
+		fps       string
+		width     int
+		height    int
+		style     Style
+		video     *Video
 	}{
-		{"default-25", "25", 1920, 1080, DefaultStyle()},
-		{"default-23.976", "23.976", 1920, 1080, DefaultStyle()},
-		{"custom-vertical-29.97", "29.97", 1080, 1920, custom},
+		{name: "default-25", srt: "basic.srt", fps: "25", width: 1920, height: 1080, style: DefaultStyle()},
+		{name: "default-23.976", srt: "basic.srt", fps: "23.976", width: 1920, height: 1080, style: DefaultStyle()},
+		{name: "custom-vertical-29.97", srt: "basic.srt", fps: "29.97", width: 1080, height: 1920, style: custom},
+		{name: "bilingual-files-25", srt: "basic.srt", secondary: "basic-en.srt", fps: "25", width: 1920, height: 1080, style: DefaultStyle()},
+		{name: "bilingual-split-25", srt: "bilingual-split.srt", split: true, fps: "25", width: 1920, height: 1080, style: DefaultStyle()},
+		{name: "video-23.976", srt: "basic.srt", fps: "23.976", width: 1920, height: 1080, style: DefaultStyle(), video: &Video{
+			Name: "interview", URL: "file:///Users/test/Movies/interview.mov", Duration: time.Hour + 2*time.Second,
+			Timecode: "01:00:00:00", HasAudio: true, AudioRate: 48000, AudioChannels: 2,
+		}},
+		{name: "video-29.97-df-vertical", srt: "basic.srt", fps: "29.97", width: 1080, height: 1920, style: DefaultStyle(), video: &Video{
+			Name: "phone clip", URL: "file:///Users/test/Movies/phone%20clip.mp4", Duration: time.Hour + 2*time.Second,
+			Timecode: "00:59:59;28",
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			subs, err := input.Open(filepath.Join("testdata", tt.srt))
+			if err != nil {
+				t.Fatal(err)
+			}
 			opts := fixedOptions(t, tt.fps)
-			opts.Width, opts.Height, opts.Style = tt.width, tt.height, tt.style
+			opts.Width, opts.Height, opts.Style, opts.SplitLines, opts.Video = tt.width, tt.height, tt.style, tt.split, tt.video
+			if tt.secondary != "" {
+				if opts.Secondary, err = input.Open(filepath.Join("testdata", tt.secondary)); err != nil {
+					t.Fatal(err)
+				}
+			}
 			doc, err := Convert(subs, opts)
 			if err != nil {
 				t.Fatal(err)
@@ -120,7 +140,12 @@ func TestGoldenFilesMatchDTD(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			// Each DTD fixes the version attribute; the elements used are the same in 1.7 and 1.14.
+			// FCPXML 1.9 moved an asset's src into a media-rep element, so documents
+			// with a video are valid FCPXML 1.7 but not 1.14.
+			if version != fcpxml.Version && bytes.Contains(doc, []byte("<asset ")) {
+				continue
+			}
+			// Each DTD fixes the version attribute; the other elements used are the same in 1.7 and 1.14.
 			doc = bytes.Replace(doc, []byte(`version="`+fcpxml.Version+`"`), []byte(`version="`+version+`"`), 1)
 			docPath := filepath.Join(tmp, filepath.Base(g))
 			if err := os.WriteFile(docPath, doc, 0o644); err != nil {
@@ -252,6 +277,50 @@ func TestInvalidInput(t *testing.T) {
 		opts := fixedOptions(t, "25")
 		subs := setup(&opts)
 		if _, err := Convert(subs, opts); err == nil {
+			t.Errorf("%s: expected an error", name)
+		}
+	}
+}
+
+func TestVideoTitlesUseClipTime(t *testing.T) {
+	opts := fixedOptions(t, "25")
+	opts.Video = &Video{Name: "v", URL: "file:///v.mov", Duration: 10 * time.Second, Timecode: "01:00:00:00"}
+	var warnings []string
+	opts.Warnf = func(format string, args ...any) { warnings = append(warnings, fmt.Sprintf(format, args...)) }
+	doc, err := Convert(subtitles(
+		[2]time.Duration{time.Second, 2 * time.Second},
+		[2]time.Duration{9 * time.Second, 11 * time.Second}, // ends after the video
+	), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seq := doc.Library.Events[0].Projects[0].Sequence
+	clip := seq.Spine.AssetClips[0]
+	if clip.Start != "9000000/2500s" || clip.Duration != "25000/2500s" || seq.Duration != "25000/2500s" || clip.TCFormat != "NDF" {
+		t.Errorf("clip = %+v, sequence duration %s", clip, seq.Duration)
+	}
+	// 01:00:00:00 + 1s at 25 fps = frame 90025.
+	if got := clip.Titles[0].Offset; got != "9002500/2500s" {
+		t.Errorf("first title offset = %s, want 9002500/2500s", got)
+	}
+	if a := doc.Resources.Assets[0]; a.Src != "file:///v.mov" || a.Start != clip.Start || a.HasAudio != "" {
+		t.Errorf("asset = %+v", a)
+	}
+	if len(warnings) != 1 || !strings.Contains(warnings[0], "1 subtitle(s) end after the video ends") {
+		t.Errorf("warnings = %q", warnings)
+	}
+}
+
+func TestVideoErrors(t *testing.T) {
+	one := subtitles([2]time.Duration{0, time.Second})
+	for name, v := range map[string]Video{
+		"bad timecode":         {Name: "v", Duration: time.Second, Timecode: "soon"},
+		"drop-frame at 25 fps": {Name: "v", Duration: time.Second, Timecode: "00:00:00;00"},
+		"no frames":            {Name: "v", Duration: time.Millisecond},
+	} {
+		opts := fixedOptions(t, "25")
+		opts.Video = &v
+		if _, err := Convert(one, opts); err == nil {
 			t.Errorf("%s: expected an error", name)
 		}
 	}
