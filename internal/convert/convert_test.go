@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/GanymedeNil/srt2fcpxml/v3/internal/fcpxml"
+	"github.com/GanymedeNil/srt2fcpxml/v3/internal/input"
 	"github.com/asticode/go-astisub"
 )
 
@@ -42,29 +43,39 @@ func fixedOptions(t *testing.T, fps string) Options {
 }
 
 func TestGolden(t *testing.T) {
-	subs, err := astisub.OpenFile("testdata/basic.srt")
-	if err != nil {
-		t.Fatal(err)
-	}
 	custom, err := LoadStyle("testdata/custom.json", DefaultStyle())
 	if err != nil {
 		t.Fatal(err)
 	}
 	tests := []struct {
-		name   string
-		fps    string
-		width  int
-		height int
-		style  Style
+		name      string
+		srt       string
+		secondary string
+		split     bool
+		fps       string
+		width     int
+		height    int
+		style     Style
 	}{
-		{"default-25", "25", 1920, 1080, DefaultStyle()},
-		{"default-23.976", "23.976", 1920, 1080, DefaultStyle()},
-		{"custom-vertical-29.97", "29.97", 1080, 1920, custom},
+		{name: "default-25", srt: "basic.srt", fps: "25", width: 1920, height: 1080, style: DefaultStyle()},
+		{name: "default-23.976", srt: "basic.srt", fps: "23.976", width: 1920, height: 1080, style: DefaultStyle()},
+		{name: "custom-vertical-29.97", srt: "basic.srt", fps: "29.97", width: 1080, height: 1920, style: custom},
+		{name: "bilingual-files-25", srt: "basic.srt", secondary: "basic-en.srt", fps: "25", width: 1920, height: 1080, style: DefaultStyle()},
+		{name: "bilingual-split-25", srt: "bilingual-split.srt", split: true, fps: "25", width: 1920, height: 1080, style: DefaultStyle()},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			subs, err := input.Open(filepath.Join("testdata", tt.srt))
+			if err != nil {
+				t.Fatal(err)
+			}
 			opts := fixedOptions(t, tt.fps)
-			opts.Width, opts.Height, opts.Style = tt.width, tt.height, tt.style
+			opts.Width, opts.Height, opts.Style, opts.SplitLines = tt.width, tt.height, tt.style, tt.split
+			if tt.secondary != "" {
+				if opts.Secondary, err = input.Open(filepath.Join("testdata", tt.secondary)); err != nil {
+					t.Fatal(err)
+				}
+			}
 			doc, err := Convert(subs, opts)
 			if err != nil {
 				t.Fatal(err)

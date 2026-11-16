@@ -15,6 +15,7 @@ import (
 
 	"github.com/GanymedeNil/srt2fcpxml/v3/internal/convert"
 	"github.com/GanymedeNil/srt2fcpxml/v3/internal/fcpxml"
+	"github.com/GanymedeNil/srt2fcpxml/v3/internal/input"
 	"github.com/asticode/go-astisub"
 )
 
@@ -52,12 +53,14 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 	}
 	defaults := convert.DefaultStyle()
 	var (
-		input       = fs.String("srt", "", "subtitle file (can also be given as the argument)")
+		inputFile   = fs.String("srt", "", "subtitle file (can also be given as the argument)")
 		output      = fs.String("o", "", "output file, or - for stdout (default: next to the subtitle file, with an .fcpxml extension)")
 		frameRate   = fs.String("fd", "25", "frame rate: "+fcpxml.SupportedRates)
 		width       = fs.Int("width", 1920, "video width in pixels")
 		height      = fs.Int("height", 1080, "video height in pixels")
-		styleFile   = fs.String("style", "", "JSON style file; the -font*, -stroke-* and -position-y flags override it")
+		secondary   = fs.String("secondary", "", "second-language subtitle file, shown under the matching subtitle")
+		splitLines  = fs.Bool("split-lines", false, "bilingual file: first line of each subtitle is the main language, the rest the second language")
+		styleFile   = fs.String("style", "", "JSON style file; the -font*, -secondary-font*, -stroke-* and -position-y flags override it")
 		font        = fs.String("font", defaults.Font, "font family")
 		fontFace    = fs.String("font-face", defaults.FontFace, "font face, e.g. Regular, Bold")
 		fontSize    = fs.Float64("font-size", defaults.FontSize, "font size (Basic Title template at 1920x1080)")
@@ -65,6 +68,9 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 		strokeColor = fs.String("stroke-color", "", "outline color (needs -stroke-width)")
 		strokeWidth = fs.Float64("stroke-width", 0, "outline width")
 		positionY   = fs.Float64("position-y", defaults.PositionY, "vertical position from the center of the frame; negative is lower")
+		secFont     = fs.String("secondary-font", defaults.Secondary.Font, "font family of the second language")
+		secFontSize = fs.Float64("secondary-font-size", defaults.Secondary.FontSize, "font size of the second language")
+		secColor    = fs.String("secondary-font-color", "#FFFFFF", "text color of the second language")
 		showVersion = fs.Bool("version", false, "print the version and exit")
 	)
 	if err := fs.Parse(args); err != nil {
@@ -79,9 +85,9 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 	}
 
 	switch {
-	case *input == "" && fs.NArg() == 1:
-		*input = fs.Arg(0)
-	case *input == "" || fs.NArg() > 0:
+	case *inputFile == "" && fs.NArg() == 1:
+		*inputFile = fs.Arg(0)
+	case *inputFile == "" || fs.NArg() > 0:
 		fs.Usage()
 		return errUsage
 	}
@@ -113,15 +119,27 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 			style.StrokeWidth = *strokeWidth
 		case "position-y":
 			style.PositionY = *positionY
+		case "secondary-font":
+			style.Secondary.Font = *secFont
+		case "secondary-font-size":
+			style.Secondary.FontSize = *secFontSize
+		case "secondary-font-color":
+			style.Secondary.FontColor = *secColor
 		}
 	})
 
-	subtitles, err := astisub.OpenFile(*input)
+	subtitles, err := input.Open(*inputFile)
 	if err != nil {
-		return fmt.Errorf("cannot read %s: %w", *input, err)
+		return fmt.Errorf("cannot read %s: %w", *inputFile, err)
+	}
+	var secondarySubs *astisub.Subtitles
+	if *secondary != "" {
+		if secondarySubs, err = input.Open(*secondary); err != nil {
+			return fmt.Errorf("cannot read %s: %w", *secondary, err)
+		}
 	}
 
-	abs, err := filepath.Abs(*input)
+	abs, err := filepath.Abs(*inputFile)
 	if err != nil {
 		return err
 	}
@@ -134,10 +152,12 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 		Width:           *width,
 		Height:          *height,
 		Style:           style,
+		Secondary:       secondarySubs,
+		SplitLines:      *splitLines,
 		LibraryLocation: defaultLibrary(name),
 	})
 	if err != nil {
-		return fmt.Errorf("%s: %w", *input, err)
+		return fmt.Errorf("%s: %w", *inputFile, err)
 	}
 	out, err := doc.Marshal()
 	if err != nil {

@@ -5,7 +5,6 @@ package convert
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/GanymedeNil/srt2fcpxml/v3/internal/fcpxml"
@@ -21,6 +20,12 @@ type Options struct {
 	Width       int
 	Height      int
 	Style       Style
+	// Secondary holds second-language subtitles, shown under the primary subtitle
+	// they overlap most in time, in Style.Secondary.
+	Secondary *astisub.Subtitles
+	// SplitLines treats the first line of each subtitle as the primary language
+	// and the other lines as the secondary language.
+	SplitLines bool
 	// LibraryLocation is the file:// URL of the library to import into; empty leaves it out.
 	LibraryLocation string
 
@@ -46,7 +51,11 @@ func Convert(subtitles *astisub.Subtitles, opts Options) (*fcpxml.Document, erro
 	if subtitles == nil || len(subtitles.Items) == 0 {
 		return nil, errors.New("no subtitles found")
 	}
-	textStyle, params, err := opts.Style.textStyle()
+	style, err := opts.Style.compile()
+	if err != nil {
+		return nil, err
+	}
+	cues, err := buildCues(subtitles, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -69,26 +78,25 @@ func Convert(subtitles *astisub.Subtitles, opts Options) (*fcpxml.Document, erro
 	// lasts at least one frame.
 	var titles []fcpxml.Title
 	var endFrames int64
-	for i, item := range subtitles.Items {
-		startFrame, endFrame := rate.Frames(item.StartAt), rate.Frames(item.EndAt)
+	texts := titleText{style: style}
+	for _, c := range cues {
+		startFrame, endFrame := rate.Frames(c.start), rate.Frames(c.end)
 		if endFrame <= startFrame {
 			endFrame = startFrame + 1
 		}
 		endFrames = max(endFrames, endFrame)
 
-		styleID := fmt.Sprintf("ts%d", i+1)
+		text, defs, name := texts.build(c)
 		titles = append(titles, fcpxml.Title{
-			Name:     item.String(),
-			Lane:     "1",
-			Offset:   rate.Time(gapStart + startFrame),
-			Ref:      effectID,
-			Duration: rate.Time(endFrame - startFrame),
-			Start:    rate.Time(gapStart),
-			Params:   params,
-			Text: fcpxml.Text{Runs: []fcpxml.TextRun{
-				{Ref: styleID, Text: itemText(item)},
-			}},
-			TextStyleDefs: []fcpxml.TextStyleDef{{ID: styleID, Style: textStyle}},
+			Name:          name,
+			Lane:          "1",
+			Offset:        rate.Time(gapStart + startFrame),
+			Ref:           effectID,
+			Duration:      rate.Time(endFrame - startFrame),
+			Start:         rate.Time(gapStart),
+			Params:        style.params,
+			Text:          text,
+			TextStyleDefs: defs,
 		})
 	}
 
@@ -137,13 +145,4 @@ func Convert(subtitles *astisub.Subtitles, opts Options) (*fcpxml.Document, erro
 			}},
 		},
 	}, nil
-}
-
-// itemText is the subtitle's text with one line per subtitle line.
-func itemText(item *astisub.Item) string {
-	lines := make([]string, len(item.Lines))
-	for i, l := range item.Lines {
-		lines[i] = l.String()
-	}
-	return strings.Join(lines, "\n")
 }

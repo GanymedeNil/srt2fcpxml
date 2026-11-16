@@ -106,3 +106,33 @@ func TestVersion(t *testing.T) {
 		t.Errorf("exit %d, stdout %q", code, stdout)
 	}
 }
+
+func TestBilingual(t *testing.T) {
+	zh := setup(t, "zh.srt", "1\n00:00:01,000 --> 00:00:02,000\n你好\n")
+	en := setup(t, "en.srt", "1\n00:00:01,000 --> 00:00:02,000\n<i>Hello</i> <b>there</b>\n")
+	code, stdout, stderr := runCLI("-o", "-", "-secondary", en, "-secondary-font-size", "30", "-secondary-font-color", "#FFD700", zh)
+	if code != 0 {
+		t.Fatalf("exit %d: %s", code, stderr)
+	}
+	for _, want := range []string{`>你好&#xA;</text-style>`, `>Hello</text-style>`, `> </text-style>`, `>there</text-style>`, `fontSize="30"`, `fontColor="1 0.843137 0 1"`} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("output lacks %s", want)
+		}
+	}
+
+	both := setup(t, "both.srt", "1\n00:00:01,000 --> 00:00:02,000\n你好\nHello\n")
+	code, stdout, stderr = runCLI("-o", "-", "-split-lines", both)
+	if code != 0 || !strings.Contains(stdout, `>你好&#xA;</text-style>`) || !strings.Contains(stdout, `fontSize="36"`) {
+		t.Errorf("-split-lines: exit %d, stderr %q", code, stderr)
+	}
+}
+
+func TestBilingualErrors(t *testing.T) {
+	in := setup(t, "a.srt", srt)
+	if code, _, stderr := runCLI("-secondary", in, "-split-lines", in); code != 1 || !strings.Contains(stderr, "not both") {
+		t.Errorf("both options: exit %d, stderr %q", code, stderr)
+	}
+	if code, _, stderr := runCLI("-secondary", "missing.srt", in); code != 1 || !strings.Contains(stderr, "cannot read missing.srt") {
+		t.Errorf("missing secondary: exit %d, stderr %q", code, stderr)
+	}
+}
