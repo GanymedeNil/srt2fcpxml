@@ -27,6 +27,11 @@ jobs:
           if [ -n "$unformatted" ]; then echo "Run gofmt on:"; echo "$unformatted"; exit 1; fi
       - run: go vet ./...
       - run: go test ./...
+      - name: Build the web version
+        if: runner.os == 'Linux'
+        run: |
+          GOOS=js GOARCH=wasm go vet ./cmd/wasm
+          make web
 
   goreleaser-config:
     runs-on: ubuntu-latest
