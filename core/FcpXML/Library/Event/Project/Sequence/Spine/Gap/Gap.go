@@ -1,11 +1,8 @@
 package Gap
 
 import (
-	"fmt"
 	"srt2fcpxml/core/FcpXML/Common"
 	"srt2fcpxml/core/FcpXML/Library/Event/Project/Sequence/Spine/Gap/Title"
-	"srt2fcpxml/core/FcpXML/Resources"
-	"srt2fcpxml/lib"
 )
 
 type Gap struct {
@@ -17,15 +14,13 @@ type Gap struct {
 	Title    []*Title.Title `xml:"title"`
 }
 
-func NewGap(duration float64) *Gap {
-	frameRate := Resources.GetFrameRate()
-	frameRateR := Common.FrameDuration(frameRate)
-	frameDurationMolecular, frameDurationDenominator, _ := Common.FrameDurationFormat(frameRate)
+// NewGap creates the gap the titles are anchored to; durationFrames is its length in frames.
+func NewGap(rate Common.Rate, durationFrames int64) *Gap {
 	return &Gap{
 		Name:     "空隙",
 		Offset:   "0s",
-		Duration: fmt.Sprintf("%.f/%.fs", lib.Round(duration*frameRateR, 0)*frameDurationMolecular, frameDurationDenominator),
-		Start:    fmt.Sprintf("%.f/%.fs", 3.6*frameDurationDenominator*frameDurationMolecular, frameDurationDenominator),
+		Duration: rate.Time(durationFrames),
+		Start:    rate.Time(rate.GapStartFrames()),
 		Title:    nil,
 	}
 }
