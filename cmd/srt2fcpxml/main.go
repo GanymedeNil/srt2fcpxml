@@ -16,6 +16,7 @@ import (
 	"github.com/GanymedeNil/srt2fcpxml/v3/internal/convert"
 	"github.com/GanymedeNil/srt2fcpxml/v3/internal/fcpxml"
 	"github.com/GanymedeNil/srt2fcpxml/v3/internal/input"
+	"github.com/GanymedeNil/srt2fcpxml/v3/internal/probe"
 	"github.com/asticode/go-astisub"
 )
 
@@ -55,6 +56,7 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 	var (
 		inputFile   = fs.String("srt", "", "subtitle file (can also be given as the argument)")
 		output      = fs.String("o", "", "output file, or - for stdout (default: next to the subtitle file, with an .fcpxml extension)")
+		video       = fs.String("video", "", "video file to put under the subtitles; reads -fd, -width and -height from it (needs ffprobe)")
 		frameRate   = fs.String("fd", "25", "frame rate: "+fcpxml.SupportedRates)
 		width       = fs.Int("width", 1920, "video width in pixels")
 		height      = fs.Int("height", 1080, "video height in pixels")
@@ -92,8 +94,29 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 		return errUsage
 	}
 
-	rate, err := fcpxml.ParseRate(*frameRate)
-	if err != nil {
+	set := map[string]bool{}
+	fs.Visit(func(f *flag.Flag) { set[f.Name] = true })
+
+	var err error
+	var videoInfo probe.Info
+	if *video != "" {
+		if videoInfo, err = probe.Probe(*video); err != nil {
+			return err
+		}
+		if !set["width"] {
+			*width = videoInfo.Width
+		}
+		if !set["height"] {
+			*height = videoInfo.Height
+		}
+	}
+	var rate fcpxml.Rate
+	if *video != "" && !set["fd"] {
+		var ok bool
+		if rate, ok = fcpxml.RateFromFraction(videoInfo.FrameRateNum, videoInfo.FrameRateDen); !ok {
+			return fmt.Errorf("%s: frame rate %s is not supported (supported: %s); choose one with -fd", *video, videoInfo.FrameRate(), fcpxml.SupportedRates)
+		}
+	} else if rate, err = fcpxml.ParseRate(*frameRate); err != nil {
 		return err
 	}
 
@@ -146,6 +169,24 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 	base := filepath.Base(abs)
 	name := strings.TrimSuffix(base, filepath.Ext(base))
 
+	var clip *convert.Video
+	if *video != "" {
+		videoPath, err := filepath.Abs(*video)
+		if err != nil {
+			return err
+		}
+		videoBase := filepath.Base(videoPath)
+		clip = &convert.Video{
+			Name:          strings.TrimSuffix(videoBase, filepath.Ext(videoBase)),
+			URL:           fileURL(videoPath),
+			Duration:      videoInfo.Duration,
+			Timecode:      videoInfo.Timecode,
+			HasAudio:      videoInfo.HasAudio,
+			AudioRate:     videoInfo.AudioRate,
+			AudioChannels: videoInfo.AudioChannels,
+		}
+	}
+
 	doc, err := convert.Convert(subtitles, convert.Options{
 		ProjectName:     name,
 		Rate:            rate,
@@ -154,7 +195,11 @@ func convertFile(args []string, stdout, stderr io.Writer) error {
 		Style:           style,
 		Secondary:       secondarySubs,
 		SplitLines:      *splitLines,
+		Video:           clip,
 		LibraryLocation: defaultLibrary(name),
+		Warnf: func(format string, args ...any) {
+			fmt.Fprintf(stderr, "srt2fcpxml: warning: "+format+"\n", args...)
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", *inputFile, err)
@@ -180,7 +225,12 @@ func defaultLibrary(name string) string {
 	if err != nil {
 		return ""
 	}
-	u := url.URL{Scheme: "file", Path: filepath.ToSlash(filepath.Join(home, "Movies", name+".fcpbundle"))}
+	return fileURL(filepath.Join(home, "Movies", name+".fcpbundle"))
+}
+
+// fileURL turns an absolute path into a file:// URL, escaping spaces and other characters.
+func fileURL(path string) string {
+	u := url.URL{Scheme: "file", Path: filepath.ToSlash(path)}
 	return u.String()
 }
 

@@ -133,3 +133,63 @@ func TestPredefinedFormatName(t *testing.T) {
 		}
 	}
 }
+
+func TestRateFromFraction(t *testing.T) {
+	tests := []struct {
+		num, den int64
+		want     string
+		ok       bool
+	}{
+		{24000, 1001, "23.976", true},
+		{30, 1, "30", true},
+		{60000, 1001, "59.94", true},
+		{2997, 100, "", false}, // average rate of a variable-rate phone video
+		{120, 1, "", false},
+		{0, 0, "", false},
+	}
+	for _, tt := range tests {
+		got, ok := RateFromFraction(tt.num, tt.den)
+		if ok != tt.ok {
+			t.Errorf("RateFromFraction(%d, %d) ok = %v", tt.num, tt.den, ok)
+			continue
+		}
+		if ok {
+			want, _ := ParseRate(tt.want)
+			if got != want {
+				t.Errorf("RateFromFraction(%d, %d) = %v, want %v", tt.num, tt.den, got, want)
+			}
+		}
+	}
+}
+
+func TestTimecodeFrames(t *testing.T) {
+	tests := []struct {
+		rate, tc string
+		want     int64
+		drop     bool
+		wantErr  bool
+	}{
+		{rate: "23.976", tc: "01:00:00:00", want: 86400},
+		{rate: "25", tc: "00:00:01:24", want: 49},
+		{rate: "29.97", tc: "00:01:00;02", want: 1800, drop: true}, // first frame of minute 1
+		{rate: "29.97", tc: "00:10:00;00", want: 17982, drop: true},
+		{rate: "29.97", tc: "00:59:59;28", want: 107890, drop: true},
+		{rate: "59.94", tc: "00:01:00;04", want: 3600, drop: true},
+		{rate: "29.97", tc: "00:00:10:00", want: 300},  // non-drop at 29.97
+		{rate: "25", tc: "00:00:01;00", wantErr: true}, // drop-frame needs 29.97/59.94
+		{rate: "25", tc: "00:00:01:25", wantErr: true}, // frame out of range
+		{rate: "25", tc: "1:2:3", wantErr: true},
+		{rate: "25", tc: "", wantErr: true},
+	}
+	for _, tt := range tests {
+		r, _ := ParseRate(tt.rate)
+		got, drop, err := r.TimecodeFrames(tt.tc)
+		if (err != nil) != tt.wantErr {
+			t.Errorf("%s @%s: error = %v, wantErr %v", tt.tc, tt.rate, err, tt.wantErr)
+			continue
+		}
+		if !tt.wantErr && (got != tt.want || drop != tt.drop) {
+			t.Errorf("%s @%s = %d (drop %v), want %d (drop %v)", tt.tc, tt.rate, got, drop, tt.want, tt.drop)
+		}
+	}
+}

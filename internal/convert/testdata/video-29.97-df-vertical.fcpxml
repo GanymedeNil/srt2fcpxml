@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+
+<fcpxml version="1.7">
+    <resources>
+        <format id="r1" frameDuration="1001/30000s" width="1080" height="1920" colorSpace="1-1-1 (Rec. 709)"></format>
+        <effect id="r2" name="Basic Title" uid=".../Titles.localized/Bumper:Opener.localized/Basic Title.localized/Basic Title.moti"></effect>
+        <asset id="r3" name="phone clip" src="file:///Users/test/Movies/phone%20clip.mp4" start="107997890/30000s" duration="108059952/30000s" hasVideo="1" format="r1"></asset>
+    </resources>
+    <library location="file:///Users/test/Movies/basic.fcpbundle">
+        <event name="2026-01-02" uid="00000000-0000-4000-8000-000000000001">
+            <project name="basic" uid="00000000-0000-4000-8000-000000000002" modDate="2026-01-02 03:04:05 +0800">
+                <sequence duration="108059952/30000s" format="r1" tcStart="0s" tcFormat="DF" audioLayout="stereo" audioRate="48k">
+                    <spine>
+                        <asset-clip ref="r3" offset="0s" name="phone clip" start="107997890/30000s" duration="108059952/30000s" format="r1" tcFormat="DF">
+                            <title name="你好，世界 - 第二行" lane="1" offset="108027920/30000s" ref="r2" duration="75075/30000s" start="108108000/30000s">
+                                <param name="Position" key="9999/999166631/999166633/1/100/101" value="0 -450"></param>
+                                <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"></param>
+                                <param name="Flatten" key="9999/999166631/999166633/2/351" value="1"></param>
+                                <text>
+                                    <text-style ref="ts1">你好，世界&#xA;第二行</text-style>
+                                </text>
+                                <text-style-def id="ts1">
+                                    <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
+                                </text-style-def>
+                            </title>
+                            <title name="Italic &amp; bold &#34;quotes&#34;" lane="1" offset="108102995/30000s" ref="r2" duration="76076/30000s" start="108108000/30000s">
+                                <param name="Position" key="9999/999166631/999166633/1/100/101" value="0 -450"></param>
+                                <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"></param>
+                                <param name="Flatten" key="9999/999166631/999166633/2/351" value="1"></param>
+                                <text>
+                                    <text-style ref="ts2">Italic</text-style>
+                                    <text-style ref="ts3"> &amp; bold &#34;quotes&#34;</text-style>
+                                </text>
+                                <text-style-def id="ts2">
+                                    <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" italic="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
+                                </text-style-def>
+                                <text-style-def id="ts3">
+                                    <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
+                                </text-style-def>
+                            </title>
+                            <title name="一小时处的字幕" lane="1" offset="215967752/30000s" ref="r2" duration="60060/30000s" start="108108000/30000s">
+                                <param name="Position" key="9999/999166631/999166633/1/100/101" value="0 -450"></param>
+                                <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"></param>
+                                <param name="Flatten" key="9999/999166631/999166633/2/351" value="1"></param>
+                                <text>
+                                    <text-style ref="ts4">一小时处的字幕</text-style>
+                                </text>
+                                <text-style-def id="ts4">
+                                    <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
+                                </text-style-def>
+                            </title>
+                        </asset-clip>
+                    </spine>
+                </sequence>
+            </project>
+        </event>
+    </library>
+</fcpxml>
