@@ -76,7 +76,7 @@ func TestErrors(t *testing.T) {
 	}{
 		{nil, 2, "Usage"},
 		{[]string{"-nope", "x"}, 2, "flag provided but not defined"},
-		{[]string{"missing.fcpxml"}, 1, "no such file"},
+		{[]string{"missing.fcpxml"}, 1, "missing.fcpxml: file not found"},
 		{[]string{fixtures + "two-projects.fcpxml"}, 1, `choose one: "First", "Second"`},
 		{[]string{"-o", "x.ass", fixtures + "bundle.fcpxmld"}, 1, "unsupported output format"},
 		{[]string{"-only", "markers", fixtures + "bundle.fcpxmld"}, 1, "unknown kind"},

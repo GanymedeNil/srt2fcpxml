@@ -70,6 +70,10 @@ func exportFile(args []string, stdout, stderr io.Writer) error {
 	input := fs.Arg(0)
 
 	res, err := extract.ReadPath(input, extract.Options{Project: *project, Only: extract.Kind(strings.TrimSuffix(*only, "s"))})
+	if errors.Is(err, os.ErrNotExist) {
+		// The same message on every OS, instead of e.g. Windows' GetFileAttributesEx error.
+		return fmt.Errorf("%s: file not found", input)
+	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", input, err)
 	}
