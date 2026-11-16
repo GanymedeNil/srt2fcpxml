@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+
+<fcpxml version="1.7">
+    <resources>
+        <format id="r1" name="FFVideoFormat1080p25" frameDuration="100/2500s" width="1920" height="1080" colorSpace="1-1-1 (Rec. 709)"></format>
+        <effect id="r2" name="Basic Title" uid=".../Titles.localized/Bumper:Opener.localized/Basic Title.localized/Basic Title.moti"></effect>
+    </resources>
+    <library location="file:///Users/test/Movies/basic.fcpbundle">
+        <event name="2026-01-02" uid="00000000-0000-4000-8000-000000000001">
+            <project name="basic" uid="00000000-0000-4000-8000-000000000002" modDate="2026-01-02 03:04:05 +0800">
+                <sequence duration="9002500/2500s" format="r1" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+                    <spine>
+                        <gap name="Gap" offset="0s" duration="9002500/2500s" start="9000000/2500s">
+                            <title name="你好，世界 - 第二行" lane="1" offset="9002500/2500s" ref="r2" duration="6300/2500s" start="9000000/2500s">
+                                <param name="Position" key="9999/999166631/999166633/1/100/101" value="0 -450"></param>
+                                <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"></param>
+                                <param name="Flatten" key="9999/999166631/999166633/2/351" value="1"></param>
+                                <text>
+                                    <text-style ref="ts1">你好，世界&#xA;第二行</text-style>
+                                </text>
+                                <text-style-def id="ts1">
+                                    <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
+                                </text-style-def>
+                            </title>
+                            <title name="Italic &amp; bold &#34;quotes&#34;" lane="1" offset="9008800/2500s" ref="r2" duration="6300/2500s" start="9000000/2500s">
+                                <param name="Position" key="9999/999166631/999166633/1/100/101" value="0 -450"></param>
+                                <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"></param>
+                                <param name="Flatten" key="9999/999166631/999166633/2/351" value="1"></param>
+                                <text>
+                                    <text-style ref="ts2">Italic &amp; bold &#34;quotes&#34;</text-style>
+                                </text>
+                                <text-style-def id="ts2">
+                                    <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
+                                </text-style-def>
+                            </title>
+                            <title name="一小时处的字幕" lane="1" offset="17997500/2500s" ref="r2" duration="5000/2500s" start="9000000/2500s">
+                                <param name="Position" key="9999/999166631/999166633/1/100/101" value="0 -450"></param>
+                                <param name="Alignment" key="9999/999166631/999166633/2/354/999169573/401" value="1 (Center)"></param>
+                                <param name="Flatten" key="9999/999166631/999166633/2/351" value="1"></param>
+                                <text>
+                                    <text-style ref="ts3">一小时处的字幕</text-style>
+                                </text>
+                                <text-style-def id="ts3">
+                                    <text-style font="PingFang SC" fontSize="52" fontFace="Semibold" fontColor="1 1 1 1" bold="1" shadowColor="0 0 0 0.75" shadowOffset="5 315" alignment="center"></text-style>
+                                </text-style-def>
+                            </title>
+                        </gap>
+                    </spine>
+                </sequence>
+            </project>
+        </event>
+    </library>
+</fcpxml>

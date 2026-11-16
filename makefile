@@ -1,4 +1,10 @@
+.PHONY: build test clean
+
 build:
-	go build -o build/srt2fcpxml cmd/main.go
+	go build -o build/srt2fcpxml ./cmd/srt2fcpxml
+
+test:
+	go test ./...
+
 clean:
-	rm -Rf build
+	rm -rf build dist

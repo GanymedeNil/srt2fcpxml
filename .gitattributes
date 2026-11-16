@@ -1,0 +1,2 @@
+# Golden files are compared byte for byte; keep LF line endings on every OS.
+internal/convert/testdata/** -text

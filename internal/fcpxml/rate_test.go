@@ -1,4 +1,4 @@
-package Common
+package fcpxml
 
 import (
 	"math"
@@ -99,13 +99,37 @@ func TestFramesKnownValues(t *testing.T) {
 	}
 }
 
-func TestGapStartFrames(t *testing.T) {
-	ntsc24, _ := ParseRate("23.976")
-	pal, _ := ParseRate("25")
-	if got := ntsc24.Time(ntsc24.GapStartFrames()); got != "86486400/24000s" {
-		t.Errorf("23.976 gap start = %s", got)
+func TestTimebase(t *testing.T) {
+	want := map[string]int64{"23.976": 24, "24": 24, "25": 25, "29.97": 30, "30": 30, "50": 50, "59.94": 60, "60": 60}
+	for in, tb := range want {
+		r, _ := ParseRate(in)
+		if got := r.Timebase(); got != tb {
+			t.Errorf("%s: Timebase() = %d, want %d", in, got, tb)
+		}
 	}
-	if got := pal.Time(pal.GapStartFrames()); got != "900000/2500s" {
-		t.Errorf("25 gap start = %s", got)
+}
+
+func TestPredefinedFormatName(t *testing.T) {
+	tests := []struct {
+		rate          string
+		width, height int
+		want          string
+	}{
+		{"23.98", 1920, 1080, "FFVideoFormat1080p2398"},
+		{"25", 1920, 1080, "FFVideoFormat1080p25"},
+		{"29.97", 1280, 720, "FFVideoFormat720p2997"},
+		{"59.94", 3840, 2160, "FFVideoFormat3840x2160p5994"},
+		{"60", 4096, 2160, "FFVideoFormat4096x2160p60"},
+		{"25", 1080, 1920, ""}, // vertical: custom format, described by attributes only
+		{"30", 1000, 1000, ""},
+	}
+	for _, tt := range tests {
+		r, err := ParseRate(tt.rate)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := PredefinedFormatName(r, tt.width, tt.height); got != tt.want {
+			t.Errorf("PredefinedFormatName(%s, %dx%d) = %q, want %q", tt.rate, tt.width, tt.height, got, tt.want)
+		}
 	}
 }

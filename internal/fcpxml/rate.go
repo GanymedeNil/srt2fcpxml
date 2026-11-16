@@ -1,4 +1,4 @@
-package Common
+package fcpxml
 
 import (
 	"fmt"
@@ -27,15 +27,17 @@ const SupportedRates = "23.976 (23.98), 24, 25, 29.97, 30, 50, 59.94, 60"
 var supportedRates = []struct {
 	fps  float64
 	rate Rate
+	// suffix is the frame rate part of Final Cut Pro's predefined format names.
+	suffix string
 }{
-	{24000.0 / 1001, Rate{1001, 24000}},
-	{24, Rate{100, 2400}},
-	{25, Rate{100, 2500}},
-	{30000.0 / 1001, Rate{1001, 30000}},
-	{30, Rate{100, 3000}},
-	{50, Rate{100, 5000}},
-	{60000.0 / 1001, Rate{1001, 60000}},
-	{60, Rate{100, 6000}},
+	{24000.0 / 1001, Rate{1001, 24000}, "2398"},
+	{24, Rate{100, 2400}, "24"},
+	{25, Rate{100, 2500}, "25"},
+	{30000.0 / 1001, Rate{1001, 30000}, "2997"},
+	{30, Rate{100, 3000}, "30"},
+	{50, Rate{100, 5000}, "50"},
+	{60000.0 / 1001, Rate{1001, 60000}, "5994"},
+	{60, Rate{100, 6000}, "60"},
 }
 
 // ParseRate parses a frame rate such as "25", "25.0", "23.98" or "23.976".
@@ -63,6 +65,11 @@ func (r Rate) FPS() float64 {
 	return float64(r.FrameDen) / float64(r.FrameNum)
 }
 
+// Timebase returns the whole-number rate that timecode counts in (24 for 23.976).
+func (r Rate) Timebase() int64 {
+	return (r.FrameDen + r.FrameNum/2) / r.FrameNum
+}
+
 // Frames converts a duration to the nearest whole number of frames.
 func (r Rate) Frames(d time.Duration) int64 {
 	// frames = d / (FrameNum/FrameDen s) = ns * FrameDen / (FrameNum * 1e9), rounded half up.
@@ -82,10 +89,42 @@ func (r Rate) FrameDuration() string {
 	return r.Time(1)
 }
 
-// GapStartFrames is the local start of the gap that the titles are anchored to.
-// Titles use it as their time base, so it must be the same for the gap and every
-// title. The value (01:00:00:00 NDF for NTSC rates, but 00:06:00:00 for whole
-// rates) is kept from the original 10.4.6 template so the timeline is unchanged.
-func (r Rate) GapStartFrames() int64 {
-	return r.FrameDen * 36 / 10
+// Frame sizes that have a predefined Final Cut Pro format at every supported rate,
+// mapped to the size part of the format name (from Apple's "Predefined Video Formats").
+var predefinedSizes = map[[2]int]string{
+	{1920, 1080}: "1080p",
+	{1280, 720}:  "720p",
+	{1280, 1080}: "1280x1080p",
+	{1440, 1080}: "1440x1080p",
+	{2048, 1024}: "2048x1024p",
+	{2048, 1080}: "2048x1080p",
+	{2048, 1152}: "2048x1152p",
+	{2048, 1536}: "2048x1536p",
+	{2048, 1556}: "2048x1556p",
+	{3840, 2160}: "3840x2160p",
+	{4096, 2048}: "4096x2048p",
+	{4096, 2160}: "4096x2160p",
+	{4096, 2304}: "4096x2304p",
+	{4096, 3112}: "4096x3112p",
+	{5120, 2160}: "5120x2160p",
+	{5120, 2560}: "5120x2560p",
+	{5120, 2700}: "5120x2700p",
+	{960, 720}:   "960x720p",
+}
+
+// PredefinedFormatName returns Final Cut Pro's predefined name for a progressive
+// format of this size and rate (e.g. "FFVideoFormat1080p2398"), or "" for a custom
+// format such as a vertical video. The format element's width, height and
+// frameDuration attributes take precedence over the name, so "" is always safe.
+func PredefinedFormatName(r Rate, width, height int) string {
+	size, ok := predefinedSizes[[2]int{width, height}]
+	if !ok {
+		return ""
+	}
+	for _, k := range supportedRates {
+		if k.rate == r {
+			return "FFVideoFormat" + size + k.suffix
+		}
+	}
+	return ""
 }

@@ -1,0 +1,15 @@
+{
+  "font": "Helvetica Neue",
+  "fontFace": "Bold",
+  "fontSize": 64,
+  "fontColor": "#FFD700",
+  "bold": false,
+  "italic": true,
+  "strokeColor": "#000000CC",
+  "strokeWidth": 3,
+  "shadowColor": "",
+  "lineSpacing": 4,
+  "alignment": "left",
+  "positionX": -600,
+  "positionY": -380
+}
